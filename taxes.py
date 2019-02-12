@@ -61,6 +61,38 @@ def main():
     import usd
     coin_data = usd.CoinData("coinbase/BTC-USD.txt", "coinbase/ETH-USD.txt", "binance")
 
+    delete = list()
+    trade_count = len(trades)
+    for index, row in enumerate(trades):
+        if index + 1 == trade_count:
+            break
+        next_row = trades[index + 1]
+        # exchange time
+        if row[0] != next_row[0] or row[1] != next_row[1]:
+            continue
+        if row[0] == "COINBASE":
+            # side coin price
+            if row[4] != next_row[4] or row[6] != next_row[6] or row[7] != next_row[7]:
+                continue
+            row[5] = float(row[5]) + float(next_row[5])  # size
+            if debug:
+                print("merging", row, "and", next_row)
+            delete.append(next_row)
+        else:
+            # market side coin
+            if row[2] != next_row[2] or row[3] != next_row[3] or row[8] != next_row[8]:
+                continue
+            row[5] = float(row[5]) + float(next_row[5])  # size
+            row[6] = float(row[6]) + float(next_row[6])  # total
+            if debug:
+                print("merging", row, "and", next_row)
+            delete.append(next_row)
+
+    for trade in delete:
+        trades.remove(trade)
+        if debug:
+            print("deleted", trade)
+
     gains = 0.0
     history = dict()
     for row in trades:
