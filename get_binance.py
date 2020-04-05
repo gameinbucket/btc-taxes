@@ -37,7 +37,7 @@ for product in products:
     symbol = base + quote
 
     start = datetime(2018, 1, 1)
-    end = datetime(2019, 1, 1)
+    end = datetime(2020, 1, 1)
     candles = dict()
 
     while run:

@@ -5,3 +5,7 @@
 __pycache__/
 */node_modules/
 *.pyc
+
+2019.out
+2019.sh
+notes.md

@@ -31,7 +31,7 @@ time_format = "%Y-%m-%d %I:%M:%S %p"
 
 for product in products:
     start = datetime(2018, 1, 1)
-    end = datetime(2019, 1, 1)
+    end = datetime(2020, 1, 1)
     candles = dict()
 
     while run:
