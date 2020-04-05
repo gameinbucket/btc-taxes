@@ -6,6 +6,7 @@ from operator import itemgetter
 from datetime import datetime
 
 debug = False
+form_8949 = True
 epoch = datetime(1970, 1, 1)
 
 
@@ -13,11 +14,15 @@ def epoch_to_basic(time):
     return datetime.fromtimestamp(time).isoformat()
 
 
+def epoch_to_date(time):
+    return datetime.fromtimestamp(time).strftime("%m/%d/%Y")
+
+
 class Trade:
     def __init__(self, size, price, time):
         self.size = size
         self.price = price
-        self.time = epoch_to_basic(time)
+        self.time = epoch_to_date(time)
 
     def __repr__(self):
         return "<Trade size:{:,.3f}, price:{:,.3f}, time:{}>".format(self.size, self.price, self.time)
@@ -118,7 +123,8 @@ def main():
                 if coin not in history:
                     history[coin] = list()
                 history[coin].append(Trade(size, price, time))
-                print("{} bought {:,.2f} {} at $ {:,.2f}".format(epoch_to_basic(time), size, coin, price))
+                if not form_8949:
+                    print("{} bought {:,.2f} {} at $ {:,.2f}".format(epoch_to_basic(time), size, coin, price))
             else:
                 delete = list()
                 coin_history = history[coin]
@@ -132,22 +138,32 @@ def main():
                 for trade in coin_history:
                     if trade.size >= size:
                         trade.size -= size
-                        profit = (size * price) - (size * trade.price)
+                        cost = (size * trade.price)
+                        proceeds = (size * price)
+                        profit = proceeds - cost
                         gains += profit
-                        if profit >= 0.0:
-                            print("{} sold {:,} {} at $ {:,.2f} bought at $ {:,.2f} on {} profit $ {:,.2f}".format(epoch_to_basic(time), size, coin, price, trade.price, trade.time, profit))
+                        if form_8949:
+                            print("{:,.6f} {} for {} | {} | {} | $ {:,.2f} | $ {:,.2f} | $ {:,.2f}".format(size, coin, "USD", trade.time, epoch_to_date(time), proceeds, cost, profit))
                         else:
-                            print("{} sold {:,} {} at $ {:,.2f} bought at $ {:,.2f} on {} lost $ {:,.2f}".format(epoch_to_basic(time), size, coin, price, trade.price, trade.time, -profit))
+                            if profit >= 0.0:
+                                print("{} sold {:,} {} at $ {:,.2f} bought at $ {:,.2f} on {} profit $ {:,.2f}".format(epoch_to_basic(time), size, coin, price, trade.price, trade.time, profit))
+                            else:
+                                print("{} sold {:,} {} at $ {:,.2f} bought at $ {:,.2f} on {} lost $ {:,.2f}".format(epoch_to_basic(time), size, coin, price, trade.price, trade.time, -profit))
                         if trade.size == 0.0:
                             delete.append(trade)
                         break
                     else:
-                        profit = (trade.size * price) - (trade.size * trade.price)
+                        cost = (trade.size * trade.price)
+                        proceeds = (trade.size * price)
+                        profit = proceeds - cost
                         gains += profit
-                        if profit >= 0.0:
-                            print("{} sold {:,} {} at $ {:,.2f} bought at $ {:,.2f} on {} profit $ {:,.2f}".format(epoch_to_basic(time), trade.size, coin, price, trade.price, trade.time, profit))
+                        if form_8949:
+                            print("{:,.6f} {} for {} | {} | {} | $ {:,.2f} | $ {:,.2f} | $ {:,.2f}".format(trade.size, coin, "USD", trade.time, epoch_to_date(time), proceeds, cost, profit))
                         else:
-                            print("{} sold {:,} {} at $ {:,.2f} bought at $ {:,.2f} on {} lost $ {:,.2f}".format(epoch_to_basic(time), trade.size, coin, price, trade.price, trade.time, -profit))
+                            if profit >= 0.0:
+                                print("{} sold {:,} {} at $ {:,.2f} bought at $ {:,.2f} on {} profit $ {:,.2f}".format(epoch_to_basic(time), trade.size, coin, price, trade.price, trade.time, profit))
+                            else:
+                                print("{} sold {:,} {} at $ {:,.2f} bought at $ {:,.2f} on {} lost $ {:,.2f}".format(epoch_to_basic(time), trade.size, coin, price, trade.price, trade.time, -profit))
                         size -= trade.size
                         trade.size = 0
                         delete.append(trade)
@@ -185,28 +201,41 @@ def main():
             if len(coin_history) == 0:
                 raise Exception("something went wrong")
 
+            print("--- " + side + " ---")
+
             for trade in coin_history:
                 if trade.size >= sold_size:
                     trade.size -= sold_size
-                    profit = (sold_size * sold_coin_usd) - (sold_size * trade.price)
+                    proceeds = (sold_size * sold_coin_usd)
+                    cost = (sold_size * trade.price)
+                    profit = proceeds - cost
                     gains += profit
-                    if profit >= 0.0:
-                        print("{} sold {:,} {} at $ {:,.2f} bought at $ {:,.2f} on {} profit $ {:,.2f}".format(
-                            epoch_to_basic(time), sold_size, sold_coin, sold_coin_usd, trade.price, trade.time, profit))
+                    if form_8949:
+                        print("{:,.6f} {} for {} | {} | {} | $ {:,.2f} | $ {:,.2f} | $ {:,.2f}".format(sold_size, sold_coin, buy_coin, trade.time, epoch_to_date(time), proceeds, cost, profit))
                     else:
-                        print("{} sold {:,} {} at $ {:,.2f} bought at $ {:,.2f} on {} lost $ {:,.2f}".format(epoch_to_basic(time), sold_size, sold_coin, sold_coin_usd, trade.price, trade.time, -profit))
+                        if profit >= 0.0:
+                            print("{} sold {:,} {} at $ {:,.2f} bought at $ {:,.2f} on {} profit $ {:,.2f}".format(
+                                epoch_to_basic(time), sold_size, sold_coin, sold_coin_usd, trade.price, trade.time, profit))
+                        else:
+                            print("{} sold {:,} {} at $ {:,.2f} bought at $ {:,.2f} on {} lost $ {:,.2f}".format(
+                                epoch_to_basic(time), sold_size, sold_coin, sold_coin_usd, trade.price, trade.time, -profit))
                     if trade.size == 0.0:
                         delete.append(trade)
                     break
                 else:
-                    profit = (trade.size * sold_coin_usd) - (trade.size * trade.price)
+                    proceeds = (trade.size * sold_coin_usd)
+                    cost = (trade.size * trade.price)
+                    profit = proceeds - cost
                     gains += profit
-                    if profit >= 0.0:
-                        print("{} sold {:,} {} at $ {:,.2f} bought at $ {:,.2f} on {} profit $ {:,.2f}".format(
-                            epoch_to_basic(time), trade.size, sold_coin, sold_coin_usd, trade.price, trade.time, profit))
+                    if form_8949:
+                        print("{:,.6f} {} for {} | {} | {} | $ {:,.2f} | $ {:,.2f} | $ {:,.2f}".format(trade.size, sold_coin, buy_coin, trade.time, epoch_to_date(time), proceeds, cost, profit))
                     else:
-                        print("{} sold {:,} {} at $ {:,.2f} bought at $ {:,.2f} on {} lost $ {:,.2f}".format(
-                            epoch_to_basic(time), trade.size, sold_coin, sold_coin_usd, trade.price, trade.time, -profit))
+                        if profit >= 0.0:
+                            print("{} sold {:,} {} at $ {:,.2f} bought at $ {:,.2f} on {} profit $ {:,.2f}".format(
+                                epoch_to_basic(time), trade.size, sold_coin, sold_coin_usd, trade.price, trade.time, profit))
+                        else:
+                            print("{} sold {:,} {} at $ {:,.2f} bought at $ {:,.2f} on {} lost $ {:,.2f}".format(
+                                epoch_to_basic(time), trade.size, sold_coin, sold_coin_usd, trade.price, trade.time, -profit))
                     sold_size -= trade.size
                     trade.size = 0
                     delete.append(trade)
@@ -218,7 +247,10 @@ def main():
                 history[buy_coin] = list()
             history[buy_coin].append(Trade(buy_size, buy_coin_usd, time))
 
-            print("{} bought {:,} {} ($ {:,.2f}) for {:,} {} ($ {:,.2f})".format(epoch_to_basic(time), sold_size, sold_coin, sold_coin_usd, buy_size, buy_coin, buy_coin_usd))
+            if not form_8949:
+                print("{} bought {:,} {} ($ {:,.2f}) for {:,} {} ($ {:,.2f})".format(epoch_to_basic(time), sold_size, sold_coin, sold_coin_usd, buy_size, buy_coin, buy_coin_usd))
+
+            print("===========")
 
     print()
     if gains > 0.0:
